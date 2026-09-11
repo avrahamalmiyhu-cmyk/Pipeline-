@@ -1,0 +1,56 @@
+pipeline {
+    agent any
+
+    // 1. פרמטרים: מה שג'נקינס שואל אותך לפני שה-Build מתחיל
+    parameters {
+        // בחירה מתוך ענפים לבדיקה
+        choice(
+            name: 'BRANCH',
+            choices: ['main', 'test-branch', 'dev'],
+            description: 'בחר איזה ענף תרצה למשוך ולבדוק'
+        )
+
+        // תיבת סימון של כן/לא
+        booleanParam(
+            name: 'CLEANUP',
+            defaultValue: false,
+            description: 'האם למחוק קבצים זמניים בסיום הבדיקה?'
+        )
+    }
+
+    // 2. משתנים קבועים מראש (אותם ערכים בכל ריצה)
+    environment {
+        TEST_SERVER = 'my-test-box'
+    }
+
+    // 3. השלבים שהג'נקינס מבצע
+    stages {
+        stage('Initialize') {
+            steps {
+                echo "Starting pipeline run on server: ${env.TEST_SERVER}"
+                echo "Branch selected by user: ${params.BRANCH}"
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                echo "Running test suite on branch ${params.BRANCH}..."
+                // כאן מדמים פקודת בדיקה ב-Linux
+                sh "echo 'All tests passed on ${params.BRANCH}!'"
+            }
+        }
+
+        stage('Post Cleanup') {
+            steps {
+                script {
+                    if (params.CLEANUP) {
+                        echo "Cleanup is checked: Cleaning temporary test files..."
+                        sh "echo 'Workspace cleaned.'"
+                    } else {
+                        echo "Cleanup is NOT checked: Leaving files as is."
+                    }
+                }
+            }
+        }
+    }
+}
