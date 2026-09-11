@@ -1,0 +1,35 @@
+pipeline {
+    agent any
+
+    parameters {
+        choice(
+            name: 'IMAGE_NAME',
+            choices: ['alpine', 'ubuntu'],
+            description: 'באיזה Docker Image תרצה להריץ את הבדיקות?'
+        )
+        string(
+            name: 'TEST_COMMAND',
+            defaultValue: 'echo "Running automated checks..." && uname -a',
+            description: 'איזו פקודת בדיקה להריץ בתוך הקונטיינר?'
+        )
+    }
+
+    stages {
+        stage('Run Tests Inside Container') {
+            steps {
+                echo "Spawning container using image: ${params.IMAGE_NAME}..."
+
+                // הדגל --rm גורם לקונטיינר למחוק את עצמו מיד בסיום הריצה
+                sh """
+                    docker run --rm ${params.IMAGE_NAME} sh -c "${params.TEST_COMMAND}"
+                """
+            }
+        }
+    }
+
+    post {
+        always {
+            echo "Pipeline finished - container was automatically removed."
+        }
+    }
+}
